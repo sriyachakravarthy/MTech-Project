@@ -1,0 +1,171 @@
+## Config file
+
+# Log 
+seed: 777
+use_cuda: 1           # 1 for True, 0 for False
+
+# dataset
+#### from scrach with clip loss
+speaker_no: 2
+mix_lst_path: ./data/KUL/mixture_data_list_2mix.csv
+audio_direc: /data/sriyar/KUL_eeg/audio_8k/
+reference_direc: /data/sriyar/KUL_eeg/eeg/
+audio_sr: 8000
+ref_sr: 128         # reference sampleing rate, lip: 25 , gesture: 15, eeg: 128
+
+# dataloader
+num_workers: 8
+batch_size: 4         # 2-GPU training with a total effective batch size of 8
+accu_grad: 1
+effec_batch_size: 12   # per GPU, only used if accu_grad is set to 1, must be multiple times of batch size
+max_length: 10        # truncate the utterances in dataloader, in seconds 
+
+# network settings
+init_from: None       # 'None' or a log name 'log_2024-07-22(18:12:13)'
+causal: 0             # 1 for True, 0 for False
+network_reference:
+  cue: eeg            # lip or speech or gesture or EEG
+network_audio:
+  backbone: neuroheed
+  N: 256
+  L: 20
+  B: 64
+  H: 128
+  K: 100
+  R: 6
+
+# optimizer
+loss_type: sisdr      # "snr", "sisdr", "hybrid"
+init_learning_rate: 0.000125
+lr_warmup: 1          # 1 for True, 0 for False
+max_epoch: 50
+clip_grad_norm: 5
+W0505 09:55:33.964000 1658675 site-packages/torch/distributed/run.py:792] 
+W0505 09:55:33.964000 1658675 site-packages/torch/distributed/run.py:792] *****************************************
+W0505 09:55:33.964000 1658675 site-packages/torch/distributed/run.py:792] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0505 09:55:33.964000 1658675 site-packages/torch/distributed/run.py:792] *****************************************
+[W505 09:55:36.781714414 Utils.hpp:165] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[W505 09:55:36.781758051 Utils.hpp:136] Warning: Environment variable NCCL_ASYNC_ERROR_HANDLING is deprecated; use TORCH_NCCL_ASYNC_ERROR_HANDLING instead (function operator())
+[W505 09:55:36.871959558 Utils.hpp:165] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[W505 09:55:36.871997834 Utils.hpp:136] Warning: Environment variable NCCL_ASYNC_ERROR_HANDLING is deprecated; use TORCH_NCCL_ASYNC_ERROR_HANDLING instead (function operator())
+[W505 09:55:36.952987523 Utils.hpp:165] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[W505 09:55:36.953027329 Utils.hpp:136] Warning: Environment variable NCCL_ASYNC_ERROR_HANDLING is deprecated; use TORCH_NCCL_ASYNC_ERROR_HANDLING instead (function operator())
+started on /home/sriyar/neuroheed/log_KUL_eeg_neuroheed_2spk/checkpoints/log_KUL_eeg_neuroheed_2spk
+
+namespace(seed=777, use_cuda=1, config=[<yamlargparse.Path object at 0x7f187273ff10>], checkpoint_dir='/home/sriyar/neuroheed/log_KUL_eeg_neuroheed_2spk/checkpoints/log_KUL_eeg_neuroheed_2spk', train_from_last_checkpoint=1, evaluate_only=0, loss_type='sisdr', init_learning_rate=0.000125, lr_warmup=1, max_epoch=50, clip_grad_norm=5.0, batch_size=4, accu_grad=1, effec_batch_size=12, max_length=10, num_workers=8, causal=0, network_reference=namespace(cue='eeg'), network_audio=namespace(backbone='neuroheed', N=256, L=20, B=64, H=128, K=100, R=6), init_from='None', mix_lst_path='./data/KUL/mixture_data_list_2mix.csv', audio_direc='/data/sriyar/KUL_eeg/audio_8k/', reference_direc='/data/sriyar/KUL_eeg/eeg/', speaker_no=2, audio_sr=8000, ref_sr=128, local_rank=0, distributed=True, world_size=3, device=device(type='cuda'))
+network_wrapper(
+  (sep_network): neuroheed(
+    (encoder): Encoder(
+      (conv1d_U): Conv1d(1, 256, kernel_size=(20,), stride=(10,), bias=False)
+    )
+    (separator): rnn(
+      (layer_norm): GroupNorm(1, 256, eps=1e-08, affine=True)
+      (bottleneck_conv1x1): Conv1d(256, 64, kernel_size=(1,), stride=(1,), bias=False)
+      (dual_rnn): ModuleList(
+        (0-5): 6 x Dual_RNN_Block(
+          (intra_rnn): LSTM(64, 128, batch_first=True, bidirectional=True)
+          (inter_rnn): LSTM(64, 128, batch_first=True, bidirectional=True)
+          (intra_norm): GroupNorm(1, 64, eps=1e-08, affine=True)
+          (inter_norm): GroupNorm(1, 64, eps=1e-08, affine=True)
+          (intra_linear): Linear(in_features=256, out_features=64, bias=True)
+          (inter_linear): Linear(in_features=256, out_features=64, bias=True)
+        )
+      )
+      (prelu): PReLU(num_parameters=1)
+      (mask_conv1x1): Conv1d(64, 256, kernel_size=(1,), stride=(1,), bias=False)
+      (po_encoding): PositionalEncoding(
+        (dropout): Dropout(p=0.1, inplace=False)
+      )
+      (eeg_net): TransformerEncoder(
+        (layers): ModuleList(
+          (0-4): 5 x TransformerEncoderLayer(
+            (self_attn): MultiheadAttention(
+              (out_proj): NonDynamicallyQuantizableLinear(in_features=64, out_features=64, bias=True)
+            )
+            (linear1): Linear(in_features=64, out_features=256, bias=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+            (linear2): Linear(in_features=256, out_features=64, bias=True)
+            (norm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+            (norm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+            (dropout1): Dropout(p=0.1, inplace=False)
+            (dropout2): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+      (fusion): Conv1d(128, 64, kernel_size=(1,), stride=(1,), bias=False)
+    )
+    (decoder): Decoder(
+      (basis_signals): Linear(in_features=256, out_features=20, bias=False)
+    )
+  )
+)
+
+Total number of parameters: 2884417 
+
+
+Total number of trainable parameters: 2884417 
+
+[rank0]:[W505 09:55:44.835665699 Utils.hpp:111] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[rank1]:[W505 09:55:44.837838398 Utils.hpp:111] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[rank2]:[W505 09:55:44.839887963 Utils.hpp:111] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+Resuming from epoch 51
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/train.py", line 121, in <module>
+[rank2]:     main(args)
+[rank2]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/train.py", line 46, in main
+[rank2]:     solver = Solver(args=args,
+[rank2]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/solver.py", line 68, in __init__
+[rank2]:     self._init_training_state()
+[rank2]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/solver.py", line 81, in _init_training_state
+[rank2]:     self._load_model(f"{self.args.checkpoint_dir}/last_checkpoint.pt",
+[rank2]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/solver.py", line 272, in _load_model
+[rank2]:     chk = torch.load(path, map_location='cpu')
+[rank2]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/serialization.py", line 1462, in load
+[rank2]:     return _load(
+[rank2]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/serialization.py", line 1964, in _load
+[rank2]:     result = unpickler.load()
+[rank2]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/_weights_only_unpickler.py", line 512, in load
+[rank2]:     self.append(self.persistent_load(pid))
+[rank2]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/serialization.py", line 1928, in persistent_load
+[rank2]:     typed_storage = load_tensor(
+[rank2]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/serialization.py", line 1888, in load_tensor
+[rank2]:     zip_file.get_storage_from_record(name, numel, torch.UntypedStorage)
+[rank2]: RuntimeError: PytorchStreamReader failed reading file data/562: file read failed
+Start evaluation
+W0505 09:55:46.030000 1658675 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1658822 closing signal SIGTERM
+E0505 09:55:46.346000 1658675 site-packages/torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 2 (pid: 1658824) of binary: /home/sriyar/miniconda3/envs/s4/bin/python
+Traceback (most recent call last):
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 208, in <module>
+    main()
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/typing_extensions.py", line 3252, in wrapper
+    return arg(*args, **kwargs)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 204, in main
+    launch(args)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 189, in launch
+    run(args)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+train.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2025-05-05_09:55:46
+  host      : ailab-3080ti
+  rank      : 2 (local_rank: 2)
+  exitcode  : 1 (pid: 1658824)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

@@ -1,0 +1,82 @@
+## Config file
+
+# Log 
+seed: 777
+use_cuda: 1           # 1 for True, 0 for False
+
+# dataset
+#### from scrach with clip loss
+speaker_no: 2
+mix_lst_path: ./data/KUL/mixture_data_list_2mix.csv
+audio_direc: /data/sriyar/KUL_eeg/audio_8k/
+reference_direc: /data/sriyar/KUL_eeg/eeg/
+audio_sr: 8000
+ref_sr: 128         # reference sampleing rate, lip: 25 , gesture: 15, eeg: 128
+
+# dataloader
+num_workers: 8
+batch_size: 4         # 2-GPU training with a total effective batch size of 8
+accu_grad: 1
+effec_batch_size: 12   # per GPU, only used if accu_grad is set to 1, must be multiple times of batch size
+max_length: 10        # truncate the utterances in dataloader, in seconds 
+
+# network settings
+init_from: None       # 'None' or a log name 'log_2024-07-22(18:12:13)'
+causal: 0             # 1 for True, 0 for False
+network_reference:
+  cue: eeg            # lip or speech or gesture or EEG
+network_audio:
+  backbone: neuroheed
+  N: 256
+  L: 20
+  B: 64
+  H: 128
+  K: 100
+  R: 6
+
+# optimizer
+loss_type: sisdr      # "snr", "sisdr", "hybrid"
+init_learning_rate: 0.000125
+lr_warmup: 1          # 1 for True, 0 for False
+max_epoch: 100
+clip_grad_norm: 5
+W0514 11:07:02.485000 3925517 site-packages/torch/distributed/run.py:792] 
+W0514 11:07:02.485000 3925517 site-packages/torch/distributed/run.py:792] *****************************************
+W0514 11:07:02.485000 3925517 site-packages/torch/distributed/run.py:792] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0514 11:07:02.485000 3925517 site-packages/torch/distributed/run.py:792] *****************************************
+Traceback (most recent call last):
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 208, in <module>
+    main()
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/typing_extensions.py", line 3252, in wrapper
+    return arg(*args, **kwargs)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 204, in main
+    launch(args)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 189, in launch
+    run(args)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 260, in launch_agent
+    result = agent.run()
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/metrics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 711, in run
+    result = self._invoke_run(role)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 864, in _invoke_run
+    self._initialize_workers(self._worker_group)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/metrics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 683, in _initialize_workers
+    self._rendezvous(worker_group)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/metrics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 500, in _rendezvous
+    rdzv_info = spec.rdzv_handler.next_rendezvous()
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/rendezvous/static_tcp_rendezvous.py", line 67, in next_rendezvous
+    self._store = TCPStore(  # type: ignore[call-arg]
+RuntimeError: The server socket has failed to listen on any local network address. port: 8801, useIpv6: 0, code: -98, name: EADDRINUSE, message: address already in use

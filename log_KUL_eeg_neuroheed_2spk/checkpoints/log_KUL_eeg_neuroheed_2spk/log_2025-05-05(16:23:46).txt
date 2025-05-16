@@ -1,0 +1,228 @@
+## Config file
+
+# Log 
+seed: 777
+use_cuda: 1           # 1 for True, 0 for False
+
+# dataset
+#### from scrach with clip loss
+speaker_no: 2
+mix_lst_path: ./data/KUL/mixture_data_list_2mix.csv
+audio_direc: /data/sriyar/KUL_eeg/audio_8k/
+reference_direc: /data/sriyar/KUL_eeg/eeg/
+audio_sr: 8000
+ref_sr: 128         # reference sampleing rate, lip: 25 , gesture: 15, eeg: 128
+
+# dataloader
+num_workers: 8
+batch_size: 4         # 2-GPU training with a total effective batch size of 8
+accu_grad: 1
+effec_batch_size: 12   # per GPU, only used if accu_grad is set to 1, must be multiple times of batch size
+max_length: 10        # truncate the utterances in dataloader, in seconds 
+
+# network settings
+init_from: None       # 'None' or a log name 'log_2024-07-22(18:12:13)'
+causal: 0             # 1 for True, 0 for False
+network_reference:
+  cue: eeg            # lip or speech or gesture or EEG
+network_audio:
+  backbone: neuroheed
+  N: 256
+  L: 20
+  B: 64
+  H: 128
+  K: 100
+  R: 6
+
+# optimizer
+loss_type: sisdr      # "snr", "sisdr", "hybrid"
+init_learning_rate: 0.000125
+lr_warmup: 1          # 1 for True, 0 for False
+max_epoch: 100
+clip_grad_norm: 5
+W0505 16:23:47.790000 1839834 site-packages/torch/distributed/run.py:792] 
+W0505 16:23:47.790000 1839834 site-packages/torch/distributed/run.py:792] *****************************************
+W0505 16:23:47.790000 1839834 site-packages/torch/distributed/run.py:792] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0505 16:23:47.790000 1839834 site-packages/torch/distributed/run.py:792] *****************************************
+[W505 16:23:49.471519449 Utils.hpp:165] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[W505 16:23:49.471592963 Utils.hpp:136] Warning: Environment variable NCCL_ASYNC_ERROR_HANDLING is deprecated; use TORCH_NCCL_ASYNC_ERROR_HANDLING instead (function operator())
+[W505 16:23:50.686844555 Utils.hpp:165] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[W505 16:23:50.686915580 Utils.hpp:136] Warning: Environment variable NCCL_ASYNC_ERROR_HANDLING is deprecated; use TORCH_NCCL_ASYNC_ERROR_HANDLING instead (function operator())
+[W505 16:23:50.715478038 Utils.hpp:165] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[W505 16:23:50.715545666 Utils.hpp:136] Warning: Environment variable NCCL_ASYNC_ERROR_HANDLING is deprecated; use TORCH_NCCL_ASYNC_ERROR_HANDLING instead (function operator())
+started on /home/sriyar/neuroheed/log_KUL_eeg_neuroheed_2spk/checkpoints/log_KUL_eeg_neuroheed_2spk
+
+namespace(seed=777, use_cuda=1, config=[<yamlargparse.Path object at 0x7f83b71f7850>], checkpoint_dir='/home/sriyar/neuroheed/log_KUL_eeg_neuroheed_2spk/checkpoints/log_KUL_eeg_neuroheed_2spk', train_from_last_checkpoint=1, evaluate_only=0, loss_type='sisdr', init_learning_rate=0.000125, lr_warmup=1, max_epoch=100, clip_grad_norm=5.0, batch_size=4, accu_grad=1, effec_batch_size=12, max_length=10, num_workers=8, causal=0, network_reference=namespace(cue='eeg'), network_audio=namespace(backbone='neuroheed', N=256, L=20, B=64, H=128, K=100, R=6), init_from='None', mix_lst_path='./data/KUL/mixture_data_list_2mix.csv', audio_direc='/data/sriyar/KUL_eeg/audio_8k/', reference_direc='/data/sriyar/KUL_eeg/eeg/', speaker_no=2, audio_sr=8000, ref_sr=128, local_rank=0, distributed=True, world_size=3, device=device(type='cuda'))
+network_wrapper(
+  (sep_network): neuroheed(
+    (encoder): Encoder(
+      (conv1d_U): Conv1d(1, 256, kernel_size=(20,), stride=(10,), bias=False)
+    )
+    (separator): rnn(
+      (layer_norm): GroupNorm(1, 256, eps=1e-08, affine=True)
+      (bottleneck_conv1x1): Conv1d(256, 64, kernel_size=(1,), stride=(1,), bias=False)
+      (dual_rnn): ModuleList(
+        (0-5): 6 x Dual_RNN_Block(
+          (intra_rnn): LSTM(64, 128, batch_first=True, bidirectional=True)
+          (inter_rnn): LSTM(64, 128, batch_first=True, bidirectional=True)
+          (intra_norm): GroupNorm(1, 64, eps=1e-08, affine=True)
+          (inter_norm): GroupNorm(1, 64, eps=1e-08, affine=True)
+          (intra_linear): Linear(in_features=256, out_features=64, bias=True)
+          (inter_linear): Linear(in_features=256, out_features=64, bias=True)
+        )
+      )
+      (prelu): PReLU(num_parameters=1)
+      (mask_conv1x1): Conv1d(64, 256, kernel_size=(1,), stride=(1,), bias=False)
+      (po_encoding): PositionalEncoding(
+        (dropout): Dropout(p=0.1, inplace=False)
+      )
+      (eeg_net): TransformerEncoder(
+        (layers): ModuleList(
+          (0-4): 5 x TransformerEncoderLayer(
+            (self_attn): MultiheadAttention(
+              (out_proj): NonDynamicallyQuantizableLinear(in_features=64, out_features=64, bias=True)
+            )
+            (linear1): Linear(in_features=64, out_features=256, bias=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+            (linear2): Linear(in_features=256, out_features=64, bias=True)
+            (norm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+            (norm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+            (dropout1): Dropout(p=0.1, inplace=False)
+            (dropout2): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+      (fusion): Conv1d(128, 64, kernel_size=(1,), stride=(1,), bias=False)
+    )
+    (decoder): Decoder(
+      (basis_signals): Linear(in_features=256, out_features=20, bias=False)
+    )
+  )
+)
+
+Total number of parameters: 2884417 
+
+
+Total number of trainable parameters: 2884417 
+
+[rank1]:[W505 16:23:57.568005808 Utils.hpp:111] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[rank0]:[W505 16:23:57.568396250 Utils.hpp:111] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[rank2]:[W505 16:23:57.569454822 Utils.hpp:111] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+Resuming from epoch 46
+[rank1]:[W505 16:23:59.719255695 reducer.cpp:1400] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank2]:[W505 16:23:59.742061707 reducer.cpp:1400] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank0]:[W505 16:23:59.841818473 reducer.cpp:1400] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[Iter    0] avg_total=-16.5203, avg_audio=-17.6642, avg_clip=1.4299  (audio_w=1.00, clip_w=0.80)
+[Iter  100] avg_total=-14.5712, avg_audio=-15.6990, avg_clip=1.4098  (audio_w=1.00, clip_w=0.80)
+[Iter  200] avg_total=-14.9209, avg_audio=-16.0392, avg_clip=1.3978  (audio_w=1.00, clip_w=0.80)
+[Iter  300] avg_total=-14.9065, avg_audio=-16.0202, avg_clip=1.3921  (audio_w=1.00, clip_w=0.80)
+[Iter  400] avg_total=-14.9380, avg_audio=-16.0494, avg_clip=1.3892  (audio_w=1.00, clip_w=0.80)
+[Iter  500] avg_total=-14.7661, avg_audio=-15.8757, avg_clip=1.3869  (audio_w=1.00, clip_w=0.80)
+[Iter  600] avg_total=-14.7515, avg_audio=-15.8588, avg_clip=1.3841  (audio_w=1.00, clip_w=0.80)
+[Iter  700] avg_total=-14.8355, avg_audio=-15.9411, avg_clip=1.3820  (audio_w=1.00, clip_w=0.80)
+[Iter  800] avg_total=-14.9173, avg_audio=-16.0209, avg_clip=1.3796  (audio_w=1.00, clip_w=0.80)
+[Iter  900] avg_total=-14.9320, avg_audio=-16.0347, avg_clip=1.3784  (audio_w=1.00, clip_w=0.80)
+[Iter 1000] avg_total=-14.9250, avg_audio=-16.0262, avg_clip=1.3764  (audio_w=1.00, clip_w=0.80)
+[Iter 1100] avg_total=-15.0037, avg_audio=-16.1026, avg_clip=1.3736  (audio_w=1.00, clip_w=0.80)
+[Iter 1200] avg_total=-15.0264, avg_audio=-16.1240, avg_clip=1.3719  (audio_w=1.00, clip_w=0.80)
+[Iter 1300] avg_total=-15.0755, avg_audio=-16.1719, avg_clip=1.3705  (audio_w=1.00, clip_w=0.80)
+[Iter 1400] avg_total=-15.0473, avg_audio=-16.1422, avg_clip=1.3687  (audio_w=1.00, clip_w=0.80)
+[Iter 1500] avg_total=-15.0332, avg_audio=-16.1270, avg_clip=1.3673  (audio_w=1.00, clip_w=0.80)
+[Iter 1600] avg_total=-15.0346, avg_audio=-16.1266, avg_clip=1.3650  (audio_w=1.00, clip_w=0.80)
+[Iter 1700] avg_total=-15.0183, avg_audio=-16.1089, avg_clip=1.3632  (audio_w=1.00, clip_w=0.80)
+[Iter 1800] avg_total=-15.0219, avg_audio=-16.1109, avg_clip=1.3613  (audio_w=1.00, clip_w=0.80)
+[Iter 1900] avg_total=-14.9948, avg_audio=-16.0819, avg_clip=1.3590  (audio_w=1.00, clip_w=0.80)
+[Iter 2000] avg_total=-15.0006, avg_audio=-16.0860, avg_clip=1.3567  (audio_w=1.00, clip_w=0.80)
+[Iter 2100] avg_total=-15.0503, avg_audio=-16.1341, avg_clip=1.3547  (audio_w=1.00, clip_w=0.80)
+[Iter 2200] avg_total=-15.0727, avg_audio=-16.1545, avg_clip=1.3523  (audio_w=1.00, clip_w=0.80)
+[Iter 2300] avg_total=-15.0861, avg_audio=-16.1666, avg_clip=1.3506  (audio_w=1.00, clip_w=0.80)
+[Iter 2400] avg_total=-15.0559, avg_audio=-16.1347, avg_clip=1.3485  (audio_w=1.00, clip_w=0.80)
+[Iter 2500] avg_total=-15.0278, avg_audio=-16.1046, avg_clip=1.3460  (audio_w=1.00, clip_w=0.80)
+[Iter 2600] avg_total=-15.0248, avg_audio=-16.0999, avg_clip=1.3438  (audio_w=1.00, clip_w=0.80)
+[Iter 2700] avg_total=-15.0105, avg_audio=-16.0839, avg_clip=1.3417  (audio_w=1.00, clip_w=0.80)
+[Iter 2800] avg_total=-15.0171, avg_audio=-16.0869, avg_clip=1.3372  (audio_w=1.00, clip_w=0.80)
+[Iter 2900] avg_total=-15.0199, avg_audio=-16.0872, avg_clip=1.3341  (audio_w=1.00, clip_w=0.80)
+[Iter 3000] avg_total=-15.0085, avg_audio=-16.0736, avg_clip=1.3314  (audio_w=1.00, clip_w=0.80)
+[Iter 3100] avg_total=-15.0421, avg_audio=-16.1054, avg_clip=1.3290  (audio_w=1.00, clip_w=0.80)
+[Iter 3200] avg_total=-15.0131, avg_audio=-16.0752, avg_clip=1.3277  (audio_w=1.00, clip_w=0.80)
+[Iter 3300] avg_total=-15.0111, avg_audio=-16.0705, avg_clip=1.3242  (audio_w=1.00, clip_w=0.80)
+[Iter 3400] avg_total=-15.0449, avg_audio=-16.1019, avg_clip=1.3212  (audio_w=1.00, clip_w=0.80)
+[Iter 3500] avg_total=-15.0497, avg_audio=-16.1038, avg_clip=1.3176  (audio_w=1.00, clip_w=0.80)
+[Iter 3600] avg_total=-15.0315, avg_audio=-16.0849, avg_clip=1.3167  (audio_w=1.00, clip_w=0.80)
+[Iter 3700] avg_total=-15.0375, avg_audio=-16.0877, avg_clip=1.3127  (audio_w=1.00, clip_w=0.80)
+[Iter 3800] avg_total=-15.0362, avg_audio=-16.0833, avg_clip=1.3089  (audio_w=1.00, clip_w=0.80)
+[Iter 3900] avg_total=-15.0471, avg_audio=-16.0919, avg_clip=1.3061  (audio_w=1.00, clip_w=0.80)
+[Iter 4000] avg_total=-15.0376, avg_audio=-16.0815, avg_clip=1.3048  (audio_w=1.00, clip_w=0.80)
+[Iter 4100] avg_total=-15.0575, avg_audio=-16.0990, avg_clip=1.3019  (audio_w=1.00, clip_w=0.80)
+[Iter 4200] avg_total=-15.0591, avg_audio=-16.0983, avg_clip=1.2989  (audio_w=1.00, clip_w=0.80)
+[Iter 4300] avg_total=-15.0550, avg_audio=-16.0925, avg_clip=1.2969  (audio_w=1.00, clip_w=0.80)
+[Iter 4400] avg_total=-15.0744, avg_audio=-16.1097, avg_clip=1.2941  (audio_w=1.00, clip_w=0.80)
+[Iter 4500] avg_total=-15.0961, avg_audio=-16.1302, avg_clip=1.2926  (audio_w=1.00, clip_w=0.80)
+[Iter 4600] avg_total=-15.1046, avg_audio=-16.1362, avg_clip=1.2894  (audio_w=1.00, clip_w=0.80)
+[Iter 4700] avg_total=-15.1080, avg_audio=-16.1379, avg_clip=1.2874  (audio_w=1.00, clip_w=0.80)
+[Iter 4800] avg_total=-15.1305, avg_audio=-16.1580, avg_clip=1.2845  (audio_w=1.00, clip_w=0.80)
+[Iter 4900] avg_total=-15.1304, avg_audio=-16.1557, avg_clip=1.2817  (audio_w=1.00, clip_w=0.80)
+[Iter 5000] avg_total=-15.1259, avg_audio=-16.1498, avg_clip=1.2799  (audio_w=1.00, clip_w=0.80)
+[Iter 5100] avg_total=-15.1430, avg_audio=-16.1651, avg_clip=1.2776  (audio_w=1.00, clip_w=0.80)
+[Iter 5200] avg_total=-15.1375, avg_audio=-16.1584, avg_clip=1.2761  (audio_w=1.00, clip_w=0.80)
+[Iter 5300] avg_total=-15.1347, avg_audio=-16.1539, avg_clip=1.2739  (audio_w=1.00, clip_w=0.80)
+[Iter 5400] avg_total=-15.1220, avg_audio=-16.1397, avg_clip=1.2720  (audio_w=1.00, clip_w=0.80)
+[Iter 5500] avg_total=-15.1205, avg_audio=-16.1374, avg_clip=1.2711  (audio_w=1.00, clip_w=0.80)
+[Iter 5600] avg_total=-15.1296, avg_audio=-16.1444, avg_clip=1.2685  (audio_w=1.00, clip_w=0.80)
+[Iter 5700] avg_total=-15.1431, avg_audio=-16.1561, avg_clip=1.2663  (audio_w=1.00, clip_w=0.80)
+[Iter 5800] avg_total=-15.1418, avg_audio=-16.1547, avg_clip=1.2661  (audio_w=1.00, clip_w=0.80)
+[Iter 5900] avg_total=-15.1507, avg_audio=-16.1622, avg_clip=1.2644  (audio_w=1.00, clip_w=0.80)
+[Iter 6000] avg_total=-15.1635, avg_audio=-16.1737, avg_clip=1.2628  (audio_w=1.00, clip_w=0.80)
+[Iter 6100] avg_total=-15.1661, avg_audio=-16.1746, avg_clip=1.2606  (audio_w=1.00, clip_w=0.80)
+[Iter 6200] avg_total=-15.1711, avg_audio=-16.1783, avg_clip=1.2590  (audio_w=1.00, clip_w=0.80)
+[Iter 6300] avg_total=-15.1660, avg_audio=-16.1721, avg_clip=1.2576  (audio_w=1.00, clip_w=0.80)
+[Iter 6400] avg_total=-15.1592, avg_audio=-16.1645, avg_clip=1.2565  (audio_w=1.00, clip_w=0.80)
+[Iter 6500] avg_total=-15.1603, avg_audio=-16.1650, avg_clip=1.2558  (audio_w=1.00, clip_w=0.80)
+[Iter 6600] avg_total=-15.1708, avg_audio=-16.1737, avg_clip=1.2536  (audio_w=1.00, clip_w=0.80)
+[Iter 6700] avg_total=-15.1748, avg_audio=-16.1765, avg_clip=1.2521  (audio_w=1.00, clip_w=0.80)
+[Iter 6800] avg_total=-15.1735, avg_audio=-16.1737, avg_clip=1.2503  (audio_w=1.00, clip_w=0.80)
+[Iter 6900] avg_total=-15.1760, avg_audio=-16.1751, avg_clip=1.2490  (audio_w=1.00, clip_w=0.80)
+[Iter 7000] avg_total=-15.1708, avg_audio=-16.1689, avg_clip=1.2476  (audio_w=1.00, clip_w=0.80)
+[Iter 7100] avg_total=-15.1743, avg_audio=-16.1709, avg_clip=1.2457  (audio_w=1.00, clip_w=0.80)
+[Iter 7200] avg_total=-15.1779, avg_audio=-16.1735, avg_clip=1.2445  (audio_w=1.00, clip_w=0.80)
+[Iter 7300] avg_total=-15.1753, avg_audio=-16.1698, avg_clip=1.2431  (audio_w=1.00, clip_w=0.80)
+[Iter 7400] avg_total=-15.1759, avg_audio=-16.1694, avg_clip=1.2418  (audio_w=1.00, clip_w=0.80)
+[Iter 7500] avg_total=-15.1847, avg_audio=-16.1772, avg_clip=1.2407  (audio_w=1.00, clip_w=0.80)
+[Iter 7600] avg_total=-15.1824, avg_audio=-16.1741, avg_clip=1.2396  (audio_w=1.00, clip_w=0.80)
+[Iter 7700] avg_total=-15.1935, avg_audio=-16.1843, avg_clip=1.2384  (audio_w=1.00, clip_w=0.80)
+[Iter 7800] avg_total=-15.2003, avg_audio=-16.1901, avg_clip=1.2372  (audio_w=1.00, clip_w=0.80)
+[Iter 7900] avg_total=-15.2031, avg_audio=-16.1924, avg_clip=1.2366  (audio_w=1.00, clip_w=0.80)
+[Iter 8000] avg_total=-15.2128, avg_audio=-16.2011, avg_clip=1.2355  (audio_w=1.00, clip_w=0.80)
+[Iter 8100] avg_total=-15.2218, avg_audio=-16.2094, avg_clip=1.2345  (audio_w=1.00, clip_w=0.80)
+[Iter 8200] avg_total=-15.2029, avg_audio=-16.1898, avg_clip=1.2337  (audio_w=1.00, clip_w=0.80)
+[Iter 8300] avg_total=-15.2104, avg_audio=-16.1963, avg_clip=1.2325  (audio_w=1.00, clip_w=0.80)
+[Iter 8400] avg_total=-15.2127, avg_audio=-16.1979, avg_clip=1.2315  (audio_w=1.00, clip_w=0.80)
+W0506 05:34:15.715000 1839834 site-packages/torch/distributed/elastic/agent/server/api.py:719] Received Signals.SIGTERM death signal, shutting down workers
+Traceback (most recent call last):
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 208, in <module>
+    main()
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/typing_extensions.py", line 3252, in wrapper
+    return arg(*args, **kwargs)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 204, in main
+    launch(args)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 189, in launch
+    run(args)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 260, in launch_agent
+    result = agent.run()
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/metrics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 711, in run
+    result = self._invoke_run(role)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 870, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 1839834 got signal: 15

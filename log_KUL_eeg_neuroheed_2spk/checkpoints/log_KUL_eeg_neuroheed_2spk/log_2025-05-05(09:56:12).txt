@@ -1,0 +1,141 @@
+## Config file
+
+# Log 
+seed: 777
+use_cuda: 1           # 1 for True, 0 for False
+
+# dataset
+#### from scrach with clip loss
+speaker_no: 2
+mix_lst_path: ./data/KUL/mixture_data_list_2mix.csv
+audio_direc: /data/sriyar/KUL_eeg/audio_8k/
+reference_direc: /data/sriyar/KUL_eeg/eeg/
+audio_sr: 8000
+ref_sr: 128         # reference sampleing rate, lip: 25 , gesture: 15, eeg: 128
+
+# dataloader
+num_workers: 8
+batch_size: 4         # 2-GPU training with a total effective batch size of 8
+accu_grad: 1
+effec_batch_size: 12   # per GPU, only used if accu_grad is set to 1, must be multiple times of batch size
+max_length: 10        # truncate the utterances in dataloader, in seconds 
+
+# network settings
+init_from: None       # 'None' or a log name 'log_2024-07-22(18:12:13)'
+causal: 0             # 1 for True, 0 for False
+network_reference:
+  cue: eeg            # lip or speech or gesture or EEG
+network_audio:
+  backbone: neuroheed
+  N: 256
+  L: 20
+  B: 64
+  H: 128
+  K: 100
+  R: 6
+
+# optimizer
+loss_type: sisdr      # "snr", "sisdr", "hybrid"
+init_learning_rate: 0.000125
+lr_warmup: 1          # 1 for True, 0 for False
+max_epoch: 50
+clip_grad_norm: 5
+W0505 09:56:14.362000 1660835 site-packages/torch/distributed/run.py:792] 
+W0505 09:56:14.362000 1660835 site-packages/torch/distributed/run.py:792] *****************************************
+W0505 09:56:14.362000 1660835 site-packages/torch/distributed/run.py:792] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0505 09:56:14.362000 1660835 site-packages/torch/distributed/run.py:792] *****************************************
+[W505 09:56:16.031220664 Utils.hpp:165] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[W505 09:56:16.031271745 Utils.hpp:136] Warning: Environment variable NCCL_ASYNC_ERROR_HANDLING is deprecated; use TORCH_NCCL_ASYNC_ERROR_HANDLING instead (function operator())
+[W505 09:56:16.294257577 Utils.hpp:165] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[W505 09:56:16.294296800 Utils.hpp:136] Warning: Environment variable NCCL_ASYNC_ERROR_HANDLING is deprecated; use TORCH_NCCL_ASYNC_ERROR_HANDLING instead (function operator())
+[W505 09:56:16.308707838 Utils.hpp:165] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[W505 09:56:16.308746488 Utils.hpp:136] Warning: Environment variable NCCL_ASYNC_ERROR_HANDLING is deprecated; use TORCH_NCCL_ASYNC_ERROR_HANDLING instead (function operator())
+started on /home/sriyar/neuroheed/log_KUL_eeg_neuroheed_2spk/checkpoints/log_KUL_eeg_neuroheed_2spk
+
+namespace(seed=777, use_cuda=1, config=[<yamlargparse.Path object at 0x7f06c1b1ff10>], checkpoint_dir='/home/sriyar/neuroheed/log_KUL_eeg_neuroheed_2spk/checkpoints/log_KUL_eeg_neuroheed_2spk', train_from_last_checkpoint=1, evaluate_only=0, loss_type='sisdr', init_learning_rate=0.000125, lr_warmup=1, max_epoch=50, clip_grad_norm=5.0, batch_size=4, accu_grad=1, effec_batch_size=12, max_length=10, num_workers=8, causal=0, network_reference=namespace(cue='eeg'), network_audio=namespace(backbone='neuroheed', N=256, L=20, B=64, H=128, K=100, R=6), init_from='None', mix_lst_path='./data/KUL/mixture_data_list_2mix.csv', audio_direc='/data/sriyar/KUL_eeg/audio_8k/', reference_direc='/data/sriyar/KUL_eeg/eeg/', speaker_no=2, audio_sr=8000, ref_sr=128, local_rank=0, distributed=True, world_size=3, device=device(type='cuda'))
+network_wrapper(
+  (sep_network): neuroheed(
+    (encoder): Encoder(
+      (conv1d_U): Conv1d(1, 256, kernel_size=(20,), stride=(10,), bias=False)
+    )
+    (separator): rnn(
+      (layer_norm): GroupNorm(1, 256, eps=1e-08, affine=True)
+      (bottleneck_conv1x1): Conv1d(256, 64, kernel_size=(1,), stride=(1,), bias=False)
+      (dual_rnn): ModuleList(
+        (0-5): 6 x Dual_RNN_Block(
+          (intra_rnn): LSTM(64, 128, batch_first=True, bidirectional=True)
+          (inter_rnn): LSTM(64, 128, batch_first=True, bidirectional=True)
+          (intra_norm): GroupNorm(1, 64, eps=1e-08, affine=True)
+          (inter_norm): GroupNorm(1, 64, eps=1e-08, affine=True)
+          (intra_linear): Linear(in_features=256, out_features=64, bias=True)
+          (inter_linear): Linear(in_features=256, out_features=64, bias=True)
+        )
+      )
+      (prelu): PReLU(num_parameters=1)
+      (mask_conv1x1): Conv1d(64, 256, kernel_size=(1,), stride=(1,), bias=False)
+      (po_encoding): PositionalEncoding(
+        (dropout): Dropout(p=0.1, inplace=False)
+      )
+      (eeg_net): TransformerEncoder(
+        (layers): ModuleList(
+          (0-4): 5 x TransformerEncoderLayer(
+            (self_attn): MultiheadAttention(
+              (out_proj): NonDynamicallyQuantizableLinear(in_features=64, out_features=64, bias=True)
+            )
+            (linear1): Linear(in_features=64, out_features=256, bias=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+            (linear2): Linear(in_features=256, out_features=64, bias=True)
+            (norm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+            (norm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+            (dropout1): Dropout(p=0.1, inplace=False)
+            (dropout2): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+      (fusion): Conv1d(128, 64, kernel_size=(1,), stride=(1,), bias=False)
+    )
+    (decoder): Decoder(
+      (basis_signals): Linear(in_features=256, out_features=20, bias=False)
+    )
+  )
+)
+
+Total number of parameters: 2884417 
+
+
+Total number of trainable parameters: 2884417 
+
+[rank1]:[W505 09:56:24.546970819 Utils.hpp:111] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[rank0]:[W505 09:56:24.547734003 Utils.hpp:111] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[rank2]:[W505 09:56:24.548385148 Utils.hpp:111] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+Resuming from epoch 51
+Start evaluation
+W0506 05:34:15.724000 1660835 site-packages/torch/distributed/elastic/agent/server/api.py:719] Received Signals.SIGTERM death signal, shutting down workers
+Traceback (most recent call last):
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 208, in <module>
+    main()
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/typing_extensions.py", line 3252, in wrapper
+    return arg(*args, **kwargs)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 204, in main
+    launch(args)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 189, in launch
+    run(args)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 260, in launch_agent
+    result = agent.run()
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/metrics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 711, in run
+    result = self._invoke_run(role)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/agent/server/api.py", line 870, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 1660835 got signal: 15

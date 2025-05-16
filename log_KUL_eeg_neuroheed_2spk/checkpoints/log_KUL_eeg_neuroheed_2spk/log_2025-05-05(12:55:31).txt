@@ -1,0 +1,207 @@
+## Config file
+
+# Log 
+seed: 777
+use_cuda: 1           # 1 for True, 0 for False
+
+# dataset
+#### from scrach with clip loss
+speaker_no: 2
+mix_lst_path: ./data/KUL/mixture_data_list_2mix.csv
+audio_direc: /data/sriyar/KUL_eeg/audio_8k/
+reference_direc: /data/sriyar/KUL_eeg/eeg/
+audio_sr: 8000
+ref_sr: 128         # reference sampleing rate, lip: 25 , gesture: 15, eeg: 128
+
+# dataloader
+num_workers: 8
+batch_size: 4         # 2-GPU training with a total effective batch size of 8
+accu_grad: 1
+effec_batch_size: 12   # per GPU, only used if accu_grad is set to 1, must be multiple times of batch size
+max_length: 10        # truncate the utterances in dataloader, in seconds 
+
+# network settings
+init_from: None       # 'None' or a log name 'log_2024-07-22(18:12:13)'
+causal: 0             # 1 for True, 0 for False
+network_reference:
+  cue: eeg            # lip or speech or gesture or EEG
+network_audio:
+  backbone: neuroheed
+  N: 256
+  L: 20
+  B: 64
+  H: 128
+  K: 100
+  R: 6
+
+# optimizer
+loss_type: sisdr      # "snr", "sisdr", "hybrid"
+init_learning_rate: 0.000125
+lr_warmup: 1          # 1 for True, 0 for False
+max_epoch: 100
+clip_grad_norm: 5
+W0505 12:55:32.702000 1748892 site-packages/torch/distributed/run.py:792] 
+W0505 12:55:32.702000 1748892 site-packages/torch/distributed/run.py:792] *****************************************
+W0505 12:55:32.702000 1748892 site-packages/torch/distributed/run.py:792] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0505 12:55:32.702000 1748892 site-packages/torch/distributed/run.py:792] *****************************************
+[W505 12:55:34.346167318 Utils.hpp:165] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[W505 12:55:34.346212723 Utils.hpp:136] Warning: Environment variable NCCL_ASYNC_ERROR_HANDLING is deprecated; use TORCH_NCCL_ASYNC_ERROR_HANDLING instead (function operator())
+[W505 12:55:34.546932071 Utils.hpp:165] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[W505 12:55:34.547023348 Utils.hpp:136] Warning: Environment variable NCCL_ASYNC_ERROR_HANDLING is deprecated; use TORCH_NCCL_ASYNC_ERROR_HANDLING instead (function operator())
+started on /home/sriyar/neuroheed/log_KUL_eeg_neuroheed_2spk/checkpoints/log_KUL_eeg_neuroheed_2spk
+
+namespace(seed=777, use_cuda=1, config=[<yamlargparse.Path object at 0x7f7ea5f2ba60>], checkpoint_dir='/home/sriyar/neuroheed/log_KUL_eeg_neuroheed_2spk/checkpoints/log_KUL_eeg_neuroheed_2spk', train_from_last_checkpoint=1, evaluate_only=0, loss_type='sisdr', init_learning_rate=0.000125, lr_warmup=1, max_epoch=100, clip_grad_norm=5.0, batch_size=4, accu_grad=1, effec_batch_size=12, max_length=10, num_workers=8, causal=0, network_reference=namespace(cue='eeg'), network_audio=namespace(backbone='neuroheed', N=256, L=20, B=64, H=128, K=100, R=6), init_from='None', mix_lst_path='./data/KUL/mixture_data_list_2mix.csv', audio_direc='/data/sriyar/KUL_eeg/audio_8k/', reference_direc='/data/sriyar/KUL_eeg/eeg/', speaker_no=2, audio_sr=8000, ref_sr=128, local_rank=0, distributed=True, world_size=3, device=device(type='cuda'))
+network_wrapper(
+  (sep_network): neuroheed(
+    (encoder): Encoder(
+      (conv1d_U): Conv1d(1, 256, kernel_size=(20,), stride=(10,), bias=False)
+    )
+    (separator): rnn(
+      (layer_norm): GroupNorm(1, 256, eps=1e-08, affine=True)
+      (bottleneck_conv1x1): Conv1d(256, 64, kernel_size=(1,), stride=(1,), bias=False)
+      (dual_rnn): ModuleList(
+        (0-5): 6 x Dual_RNN_Block(
+          (intra_rnn): LSTM(64, 128, batch_first=True, bidirectional=True)
+          (inter_rnn): LSTM(64, 128, batch_first=True, bidirectional=True)
+          (intra_norm): GroupNorm(1, 64, eps=1e-08, affine=True)
+          (inter_norm): GroupNorm(1, 64, eps=1e-08, affine=True)
+          (intra_linear): Linear(in_features=256, out_features=64, bias=True)
+          (inter_linear): Linear(in_features=256, out_features=64, bias=True)
+        )
+      )
+      (prelu): PReLU(num_parameters=1)
+      (mask_conv1x1): Conv1d(64, 256, kernel_size=(1,), stride=(1,), bias=False)
+      (po_encoding): PositionalEncoding(
+        (dropout): Dropout(p=0.1, inplace=False)
+      )
+      (eeg_net): TransformerEncoder(
+        (layers): ModuleList(
+          (0-4): 5 x TransformerEncoderLayer(
+            (self_attn): MultiheadAttention(
+              (out_proj): NonDynamicallyQuantizableLinear(in_features=64, out_features=64, bias=True)
+            )
+            (linear1): Linear(in_features=64, out_features=256, bias=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+            (linear2): Linear(in_features=256, out_features=64, bias=True)
+            (norm1): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+            (norm2): LayerNorm((64,), eps=1e-05, elementwise_affine=True)
+            (dropout1): Dropout(p=0.1, inplace=False)
+            (dropout2): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+      (fusion): Conv1d(128, 64, kernel_size=(1,), stride=(1,), bias=False)
+    )
+    (decoder): Decoder(
+      (basis_signals): Linear(in_features=256, out_features=20, bias=False)
+    )
+  )
+)
+
+Total number of parameters: 2884417 
+
+
+Total number of trainable parameters: 2884417 
+
+[W505 12:55:35.688584582 Utils.hpp:165] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[W505 12:55:35.688646809 Utils.hpp:136] Warning: Environment variable NCCL_ASYNC_ERROR_HANDLING is deprecated; use TORCH_NCCL_ASYNC_ERROR_HANDLING instead (function operator())
+[rank2]:[W505 12:55:43.273216562 Utils.hpp:111] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[rank1]:[W505 12:55:43.273671250 Utils.hpp:111] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+[rank0]:[W505 12:55:43.273921038 Utils.hpp:111] Warning: Environment variable NCCL_BLOCKING_WAIT is deprecated; use TORCH_NCCL_BLOCKING_WAIT instead (function operator())
+Resuming from epoch 52
+[rank0]:[W505 12:55:44.348184038 reducer.cpp:1400] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank1]:[W505 12:55:44.349289697 reducer.cpp:1400] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/train.py", line 124, in <module>
+[rank0]:     main(args)
+[rank0]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/train.py", line 57, in main
+[rank0]:     solver.train()
+[rank0]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/solver.py", line 125, in train
+[rank0]:     tr_total, tr_audio, tr_clip = self._run_one_epoch(self.train_data,
+[rank0]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/solver.py", line 217, in _run_one_epoch
+[rank0]:     clip_loss  = self._clip_loss(eeg_embed, speech_embed)
+[rank0]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/solver.py", line 105, in _clip_loss
+[rank0]:     sp = self.audio_proj(speech_embed).speech_embed.mean(dim=2)
+[rank0]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/nn/modules/linear.py", line 125, in forward
+[rank0]:     return F.linear(input, self.weight, self.bias)
+[rank0]: RuntimeError: mat1 and mat2 shapes cannot be multiplied (1024x7853 and 256x512)
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/train.py", line 124, in <module>
+[rank1]:     main(args)
+[rank1]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/train.py", line 57, in main
+[rank1]:     solver.train()
+[rank1]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/solver.py", line 125, in train
+[rank1]:     tr_total, tr_audio, tr_clip = self._run_one_epoch(self.train_data,
+[rank1]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/solver.py", line 217, in _run_one_epoch
+[rank1]:     clip_loss  = self._clip_loss(eeg_embed, speech_embed)
+[rank1]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/solver.py", line 105, in _clip_loss
+[rank1]:     sp = self.audio_proj(speech_embed).speech_embed.mean(dim=2)
+[rank1]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+[rank1]:     return self._call_impl(*args, **kwargs)
+[rank1]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+[rank1]:     return forward_call(*args, **kwargs)
+[rank1]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/nn/modules/linear.py", line 125, in forward
+[rank1]:     return F.linear(input, self.weight, self.bias)
+[rank1]: RuntimeError: mat1 and mat2 shapes cannot be multiplied (1024x6556 and 256x512)
+[rank2]:[W505 12:55:44.501937922 reducer.cpp:1400] Warning: find_unused_parameters=True was specified in DDP constructor, but did not find any unused parameters in the forward pass. This flag results in an extra traversal of the autograd graph every iteration,  which can adversely affect performance. If your model indeed never has any unused parameters in the forward pass, consider turning this flag off. Note that this warning may be a false positive if your model has flow control causing later iterations to have unused parameters. (function operator())
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/train.py", line 124, in <module>
+[rank2]:     main(args)
+[rank2]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/train.py", line 57, in main
+[rank2]:     solver.train()
+[rank2]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/solver.py", line 125, in train
+[rank2]:     tr_total, tr_audio, tr_clip = self._run_one_epoch(self.train_data,
+[rank2]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/solver.py", line 217, in _run_one_epoch
+[rank2]:     clip_loss  = self._clip_loss(eeg_embed, speech_embed)
+[rank2]:   File "/home/sriyar/neuroheed/ClearerVoice-Studio/train/target_speaker_extraction/solver.py", line 105, in _clip_loss
+[rank2]:     sp = self.audio_proj(speech_embed).speech_embed.mean(dim=2)
+[rank2]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+[rank2]:     return self._call_impl(*args, **kwargs)
+[rank2]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+[rank2]:     return forward_call(*args, **kwargs)
+[rank2]:   File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/nn/modules/linear.py", line 125, in forward
+[rank2]:     return F.linear(input, self.weight, self.bias)
+[rank2]: RuntimeError: mat1 and mat2 shapes cannot be multiplied (1024x4309 and 256x512)
+[rank0]:[W505 12:55:45.403561515 ProcessGroupNCCL.cpp:1496] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+W0505 12:55:46.872000 1748892 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1749088 closing signal SIGTERM
+W0505 12:55:46.872000 1748892 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sending process 1749090 closing signal SIGTERM
+E0505 12:55:46.988000 1748892 site-packages/torch/distributed/elastic/multiprocessing/api.py:869] failed (exitcode: 1) local_rank: 1 (pid: 1749089) of binary: /home/sriyar/miniconda3/envs/s4/bin/python
+Traceback (most recent call last):
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 208, in <module>
+    main()
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/typing_extensions.py", line 3252, in wrapper
+    return arg(*args, **kwargs)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 204, in main
+    launch(args)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launch.py", line 189, in launch
+    run(args)
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/run.py", line 909, in run
+    elastic_launch(
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/sriyar/miniconda3/envs/s4/lib/python3.10/site-packages/torch/distributed/launcher/api.py", line 269, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+train.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2025-05-05_12:55:46
+  host      : ailab-3080ti
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 1749089)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
