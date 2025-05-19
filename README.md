@@ -2,7 +2,10 @@
 
 In this work, we revisit the [NeuroHeed](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10683957) framework by replacing its original DPRNN-based separator with a Structured State Space Model (S4M).  This substitution aims to explore whether structured state space models can better capture the alignment between neural and acoustic features, especially over short windows ranging from 1 to 10 seconds — a key constraint in practical neuro-steered systems. Our architecture retains NeuroHeed’s encoder-decoder structure but introduces [S4 block](https://arxiv.org/pdf/2305.16932) as a drop-in separator module, potentially enhancing attention decoding robustness and temporal generalization.
 
-## Contribution to the Original Neuroheed [Code](https://github.com/modelscope/ClearerVoice-Studio/tree/main/train/target_speaker_extraction) 
+## Contribution to the Original Neuroheed 
+
+<img width="613" alt="bd" src="https://github.com/user-attachments/assets/d6ecad24-4c1a-49bb-94c3-0ca3a8e34fb0" />
+
 
 1. Replacing DPRNN with S4 in the [mddel](https://github.com/modelscope/ClearerVoice-Studio/tree/main/train/target_speaker_extraction/models/neuroheed). Included S4 related files in the folder models/neuroheed
 2. Adding [InfoNCE loss](https://github.com/modelscope/ClearerVoice-Studio/blob/main/train/target_speaker_extraction/solver.py) in the training objective
