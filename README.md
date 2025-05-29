@@ -57,3 +57,5 @@ We trained our model on a system equipped with three NVIDIA GeForce RTX 3090 GPU
 ![image7](https://github.com/user-attachments/assets/77885b8b-5aec-4393-813f-6c229dcf9e54)
 
 ![image](https://github.com/user-attachments/assets/fcb5774c-1b43-4cd8-a715-a16638038bd4)
+
+Original checkpoint of Neuroheed can be found in log_KUL_eeg_neuroheed_2spk folder. Our trained checkpoint with S4 is named as last_best_checkpooint in Master root of this repo
