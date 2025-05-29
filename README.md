@@ -10,6 +10,7 @@ In this work, we revisit the [NeuroHeed](https://ieeexplore.ieee.org/stamp/stamp
 1. Replacing DPRNN with S4 in the [mddel](https://github.com/modelscope/ClearerVoice-Studio/tree/main/train/target_speaker_extraction/models/neuroheed). Included S4 related files in the folder models/neuroheed
 2. Adding [InfoNCE loss](https://github.com/modelscope/ClearerVoice-Studio/blob/main/train/target_speaker_extraction/solver.py) in the training objective
 3. Adding [Performance metrics](https://github.com/modelscope/ClearerVoice-Studio/blob/main/train/target_speaker_extraction/solver.py) like Inference time and peak memory
+4. Code to save audio files- mixture,target and estimated
 
 # Usage
 
@@ -43,6 +44,7 @@ Modify the Dataset paths in config file- ClearerVoice-Studio/train/target_speake
 ## Step 5- Inference and Evaluation
 
 Change the trained model path (checkpoint_dir) in ClearerVoice-Studio/train/target_speaker_extraction/evaluate_only.sh and run
+To save the output audio files, change the function evaluate in solver.py (Solver class in /train/target_speaker_extraction/) with evaluate function evaluate_with_audio.py (Master root in this repo)
 
 ```
 bash evaluate_only.sh
